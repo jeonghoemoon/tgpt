@@ -6,7 +6,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/tgpt.svg?style=flat-square&color=orange)](https://crates.io/crates/tgpt)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
-[![CI Status](https://img.shields.io/github/actions/workflow/status/your-username/tgpt/ci.yml?branch=main&style=flat-square)](https://github.com/your-username/tgpt/actions)
+[![CI Status](https://img.shields.io/github/actions/workflow/status/jeonghoemoon/tgpt/ci.yml?branch=main&style=flat-square)](https://github.com/jeonghoemoon/tgpt/actions)
 [![Rust Version](https://img.shields.io/badge/rust-1.85+-ea6341.svg?style=flat-square&logo=rust)](https://www.rust-lang.org)
 
 ```
@@ -65,7 +65,7 @@ cargo install tgpt
 Ensure you have Rust installed (`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`):
 
 ```bash
-git clone https://github.com/your-username/tgpt.git
+git clone https://github.com/jeonghoemoon/tgpt.git
 cd tgpt
 cargo build --release
 ```
@@ -73,7 +73,7 @@ The optimized executable will be located at `target/release/tgpt` (or `tgpt.exe`
 
 ### 3. Pre-built Binaries
 
-Download pre-compiled standalone binaries for Linux, macOS, and Windows directly from the [GitHub Releases](https://github.com/your-username/tgpt/releases) page.
+Download pre-compiled standalone binaries for Linux, macOS, and Windows directly from the [GitHub Releases](https://github.com/jeonghoemoon/tgpt/releases) page.
 
 ---
 
