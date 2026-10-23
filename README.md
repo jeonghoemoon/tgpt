@@ -46,7 +46,7 @@ Most AI command-line tools rely on heavy runtime environments (like Node.js or P
 | 🗣️ **Interactive Chat** | Multi-turn conversational REPL with session context and slash commands: `tgpt chat` |
 | ⚡ **Smart Command Runner** | Turn natural language into runnable shell commands: `tgpt run "find files > 500MB"` |
 | 🔍 **Source Code Review** | Pass any source code file for bug discovery, security audits, and optimizations: `tgpt review main.rs` |
-| 🌐 **Multi-Provider Support** | OpenAI (GPT-4o), Anthropic (Claude 3.5 Sonnet), Google Gemini (3.8 Flash), and Local Ollama (Llama 3.2, Mistral, DeepSeek) |
+| 🌐 **Multi-Provider Support** | OpenAI (GPT-4o), Anthropic (Claude 3.5 Sonnet), Google Gemini (Gemini 3 Flash Preview), and Local Ollama (Llama 3.2, Mistral, DeepSeek) |
 | 🌊 **Token Streaming** | Smooth, real-time token rendering directly onto your terminal |
 | 🔒 **OS-Native Key Storage** | Secure local configuration using your platform's configuration standard |
 
@@ -187,7 +187,7 @@ tgpt config edit
 
 | Provider | Default Model | Configuration Required |
 |---|---|---|
-| **Google Gemini** | `gemini-3.8-flash` | `tgpt config set-key gemini <KEY>` or `export GEMINI_API_KEY="..."` |
+| **Google Gemini** | `gemini-3-flash-preview` | `tgpt config set-key gemini <KEY>` or `export GEMINI_API_KEY="..."` |
 | **OpenAI** | `gpt-4o` | `tgpt config set-key openai <KEY>` or `export OPENAI_API_KEY="..."` |
 | **Anthropic** | `claude-3-5-sonnet-20241022` | `tgpt config set-key anthropic <KEY>` or `export ANTHROPIC_API_KEY="..."` |
 | **Ollama** (Local) | `llama3.2` | Runs locally with zero API key requirement (`http://localhost:11434`) |

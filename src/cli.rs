@@ -84,7 +84,7 @@ pub enum ConfigCommands {
     SetModel {
         /// Provider name
         provider: String,
-        /// Model name (e.g. gpt-4o, claude-3-5-sonnet-20241022, gemini-2.5-flash)
+        /// Model name (e.g. gpt-4o, claude-3-5-sonnet-20241022, gemini-3-flash-preview)
         model: String,
     },
 

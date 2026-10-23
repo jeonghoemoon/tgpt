@@ -47,7 +47,7 @@ impl ProviderConfig {
     pub fn gemini_default() -> Self {
         Self {
             api_key: None,
-            model: "gemini-3.8-flash".to_string(),
+            model: "gemini-3-flash-preview".to_string(),
             base_url: "https://generativelanguage.googleapis.com".to_string(),
             max_tokens: 8192,
         }
@@ -291,7 +291,7 @@ mod tests {
         assert_eq!(openai.base_url, "https://api.openai.com/v1");
 
         let gemini = cfg.provider("gemini").unwrap();
-        assert_eq!(gemini.model, "gemini-3.8-flash");
+        assert_eq!(gemini.model, "gemini-3-flash-preview");
         assert_eq!(gemini.base_url, "https://generativelanguage.googleapis.com");
 
         let ollama = cfg.provider("ollama").unwrap();
