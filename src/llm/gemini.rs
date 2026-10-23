@@ -21,10 +21,24 @@ struct GeminiContent<'a> {
 }
 
 #[derive(Serialize)]
+struct ThinkingConfig {
+    #[serde(rename = "thinkingBudget")]
+    thinking_budget: u32,
+}
+
+#[derive(Serialize)]
+struct GenerationConfig {
+    #[serde(skip_serializing_if = "Option::is_none", rename = "thinkingConfig")]
+    thinking_config: Option<ThinkingConfig>,
+}
+
+#[derive(Serialize)]
 struct GeminiRequestBody<'a> {
     #[serde(skip_serializing_if = "Option::is_none")]
     system_instruction: Option<GeminiSystemInstruction<'a>>,
     contents: Vec<GeminiContent<'a>>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "generationConfig")]
+    generation_config: Option<GenerationConfig>,
 }
 
 #[derive(Serialize)]
@@ -105,9 +119,15 @@ impl GeminiBackend {
             })
             .collect();
 
+        // Disable extended thinking latency for snappy instant terminal streaming
+        let generation_config = Some(GenerationConfig {
+            thinking_config: Some(ThinkingConfig { thinking_budget: 0 }),
+        });
+
         GeminiRequestBody {
             system_instruction,
             contents,
+            generation_config,
         }
     }
 }
