@@ -46,7 +46,7 @@ Most AI command-line tools rely on heavy runtime environments (like Node.js or P
 | 🗣️ **Interactive Chat** | Multi-turn conversational REPL with session context and slash commands: `tgpt chat` |
 | ⚡ **Smart Command Runner** | Turn natural language into runnable shell commands: `tgpt run "find files > 500MB"` |
 | 🔍 **Source Code Review** | Pass any source code file for bug discovery, security audits, and optimizations: `tgpt review main.rs` |
-| 🌐 **Multi-Provider Support** | OpenAI (GPT-4o), Anthropic (Claude 3.5 Sonnet), Google Gemini (Gemini 3 Flash Preview), and Local Ollama (Llama 3.2, Mistral, DeepSeek) |
+| 🌐 **Multi-Provider Support** | Google Gemini (Gemini 3 Flash), OpenAI (GPT-4o), Anthropic (Claude 3.5 Sonnet), and Local Ollama (Llama 3.2, DeepSeek Coder, Mistral, Qwen) |
 | 🌊 **Token Streaming** | Smooth, real-time token rendering directly onto your terminal |
 | 🔒 **OS-Native Key Storage** | Secure local configuration using your platform's configuration standard |
 
@@ -190,9 +190,31 @@ tgpt config edit
 | **Google Gemini** | `gemini-3-flash-preview` | `tgpt config set-key gemini <KEY>` or `export GEMINI_API_KEY="..."` |
 | **OpenAI** | `gpt-4o` | `tgpt config set-key openai <KEY>` or `export OPENAI_API_KEY="..."` |
 | **Anthropic** | `claude-3-5-sonnet-20241022` | `tgpt config set-key anthropic <KEY>` or `export ANTHROPIC_API_KEY="..."` |
-| **Ollama** (Local) | `llama3.2` | Runs locally with zero API key requirement (`http://localhost:11434`) |
+| **Ollama** (Local) | `llama3.2` | Runs 100% locally with zero API key requirement (`http://localhost:11434`) |
 
-> **Pro Tip**: Any OpenAI-compatible inference provider (such as **Groq**, **DeepSeek**, **Together AI**, or **vLLM**) can be used by overriding the endpoint URL:
+### 🦙 Running Local AI Models with Ollama (100% Free & Offline)
+
+You can run any open-source model completely offline without an API key:
+
+1. Install [Ollama](https://ollama.ai)
+2. Pull your model of choice:
+   ```bash
+   ollama run llama3.2          # Meta Llama 3.2 (fast & lightweight)
+   ollama run deepseek-coder    # DeepSeek Coder (optimized for programming)
+   ollama run mistral           # Mistral 7B (high performance reasoning)
+   ollama run qwen2.5-coder     # Qwen 2.5 Coder
+   ```
+3. Point `tgpt` to the model:
+   ```bash
+   # Switch to DeepSeek for coding
+   tgpt config set-provider ollama
+   tgpt config set-model ollama deepseek-coder
+
+   # Or switch to Mistral
+   tgpt config set-model ollama mistral
+   ```
+
+> **Pro Tip**: Any OpenAI-compatible inference provider (such as **Groq**, **DeepSeek**, **Together AI**, or **vLLM**) can also be used by overriding the endpoint URL:
 > ```bash
 > tgpt config set-url openai https://api.groq.com/openai/v1
 > ```
