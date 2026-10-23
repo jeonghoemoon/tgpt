@@ -36,9 +36,8 @@ const REVIEW_SYSTEM: &str =
 
 // ── One-shot query ────────────────────────────────────────────────────────────
 
-pub async fn run_oneshot(cfg: &Config, query: &str) -> Result<()> {
-    let provider = cfg.default_provider.clone();
-    let backend = llm::build_backend(cfg, &provider)?;
+pub async fn run_oneshot(cfg: &Config, query: &str, provider: &str) -> Result<()> {
+    let backend = llm::build_backend(cfg, provider)?;
     ui::print_provider_header(backend.name(), backend.model());
 
     let system = cfg
@@ -59,7 +58,6 @@ pub async fn run_oneshot(cfg: &Config, query: &str) -> Result<()> {
         ui::print_newline();
     } else {
         let mut spinner = ui::Spinner::new("Thinking…");
-        // Fake spinner tick (non-blocking; actual wait is inside complete())
         spinner.tick();
         let reply = backend.complete(&messages).await?;
         spinner.clear();
@@ -167,9 +165,8 @@ pub async fn run_chat_session(cfg: &Config, provider: &str) -> Result<()> {
 
 // ── Command generation ────────────────────────────────────────────────────────
 
-pub async fn run_command_generation(cfg: &Config, query: &str, auto_run: bool) -> Result<()> {
-    let provider = cfg.default_provider.clone();
-    let backend = llm::build_backend(cfg, &provider)?;
+pub async fn run_command_generation(cfg: &Config, query: &str, auto_run: bool, provider: &str) -> Result<()> {
+    let backend = llm::build_backend(cfg, provider)?;
     ui::print_provider_header(backend.name(), backend.model());
 
     let messages = vec![

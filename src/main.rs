@@ -38,18 +38,16 @@ async fn main() -> Result<()> {
                 eprintln!("{}", "Error: Please provide a task description.".red());
                 std::process::exit(1);
             }
-            session::run_command_generation(&cfg, &query_str, yes).await?;
+            let provider_name = provider_override.unwrap_or(&cfg.default_provider);
+            session::run_command_generation(&cfg, &query_str, yes, provider_name).await?;
         }
 
         // ── tgpt review <file> ─────────────────────────────────────────────
         Some(Commands::Review { file, focus, provider }) => {
             let cfg = config::Config::load()?;
 
-            // If focus is provided, modify the query
             let file_path = if let Some(f) = focus {
-                // We'll append the focus to the file review context
-                // handled inside session via env or adjusted later
-                let _ = f; // used below in a future iteration
+                let _ = f;
                 file
             } else {
                 file
@@ -72,12 +70,12 @@ async fn main() -> Result<()> {
         // ── tgpt <query> (no subcommand) ───────────────────────────────────
         None => {
             if cli.query.is_empty() {
-                // Print a friendly usage hint
                 print_welcome();
             } else {
                 let cfg = config::Config::load()?;
                 let query = cli.query.join(" ");
-                session::run_oneshot(&cfg, &query).await?;
+                let provider_name = provider_override.unwrap_or(&cfg.default_provider);
+                session::run_oneshot(&cfg, &query, provider_name).await?;
             }
         }
     }
@@ -96,7 +94,7 @@ fn print_welcome() {
     println!();
     println!("{}", "Quick Start:".bold());
     println!("  1. Set your API key:");
-    println!("     {}", "tgpt config set-key openai sk-...".yellow());
+    println!("     {}", "tgpt config set-key gemini AIzaSy...".yellow());
     println!("  2. Start chatting:");
     println!("     {}", "tgpt \"What is the meaning of life?\"".yellow());
     println!();
