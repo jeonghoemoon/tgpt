@@ -21,10 +21,24 @@ struct GeminiContent<'a> {
 }
 
 #[derive(Serialize, Debug)]
+struct ThinkingConfig {
+    #[serde(rename = "thinkingBudget")]
+    thinking_budget: u32,
+}
+
+#[derive(Serialize, Debug)]
+struct GenerationConfig {
+    #[serde(skip_serializing_if = "Option::is_none", rename = "thinkingConfig")]
+    thinking_config: Option<ThinkingConfig>,
+}
+
+#[derive(Serialize, Debug)]
 struct GeminiRequestBody<'a> {
     #[serde(skip_serializing_if = "Option::is_none", rename = "systemInstruction")]
     system_instruction: Option<GeminiSystemInstruction<'a>>,
     contents: Vec<GeminiContent<'a>>,
+    #[serde(skip_serializing_if = "Option::is_none", rename = "generationConfig")]
+    generation_config: Option<GenerationConfig>,
 }
 
 #[derive(Serialize, Debug)]
@@ -40,7 +54,6 @@ struct GeminiResponse {
 
 #[derive(Deserialize, Debug)]
 struct GeminiErrorDetails {
-    code: Option<u32>,
     message: Option<String>,
 }
 
@@ -81,7 +94,10 @@ impl GeminiBackend {
             )?;
 
         Ok(Self {
-            client: Client::new(),
+            client: Client::builder()
+                .tcp_nodelay(true)
+                .build()
+                .unwrap_or_else(|_| Client::new()),
             cfg,
             api_key,
         })
@@ -115,6 +131,9 @@ impl GeminiBackend {
         GeminiRequestBody {
             system_instruction,
             contents,
+            generation_config: Some(GenerationConfig {
+                thinking_config: Some(ThinkingConfig { thinking_budget: 0 }),
+            }),
         }
     }
 }
@@ -131,9 +150,10 @@ impl LlmBackend for GeminiBackend {
 
     async fn complete(&self, messages: &[Message]) -> Result<String> {
         let url = format!(
-            "{}/v1beta/models/{}:generateContent",
+            "{}/v1beta/models/{}:generateContent?key={}",
             self.cfg.base_url.trim_end_matches('/'),
-            self.cfg.model
+            self.cfg.model,
+            self.api_key
         );
 
         let body = self.build_request_body(messages);
@@ -184,9 +204,10 @@ impl LlmBackend for GeminiBackend {
         on_chunk: &mut (dyn FnMut(StreamChunk) + Send),
     ) -> Result<String> {
         let url = format!(
-            "{}/v1beta/models/{}:streamGenerateContent?alt=sse",
+            "{}/v1beta/models/{}:streamGenerateContent?alt=sse&key={}",
             self.cfg.base_url.trim_end_matches('/'),
-            self.cfg.model
+            self.cfg.model,
+            self.api_key
         );
 
         let body = self.build_request_body(messages);
@@ -255,7 +276,7 @@ impl LlmBackend for GeminiBackend {
         }
 
         if full_text.is_empty() {
-            // If stream produced no tokens, fallback to a non-streaming completion to show the answer or error
+            // Direct fallback
             let direct = self.complete(messages).await?;
             on_chunk(StreamChunk {
                 text: direct.clone(),
