@@ -9,59 +9,52 @@ use super::{LlmBackend, Message, Role, StreamChunk};
 
 // ── Google Gemini Request/Response Models ────────────────────────────────────
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 struct GeminiPart<'a> {
     text: &'a str,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 struct GeminiContent<'a> {
     role: &'a str,
     parts: Vec<GeminiPart<'a>>,
 }
 
-#[derive(Serialize)]
-struct ThinkingConfig {
-    #[serde(rename = "thinkingBudget")]
-    thinking_budget: u32,
-}
-
-#[derive(Serialize)]
-struct GenerationConfig {
-    #[serde(skip_serializing_if = "Option::is_none", rename = "thinkingConfig")]
-    thinking_config: Option<ThinkingConfig>,
-}
-
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 struct GeminiRequestBody<'a> {
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing_if = "Option::is_none", rename = "systemInstruction")]
     system_instruction: Option<GeminiSystemInstruction<'a>>,
     contents: Vec<GeminiContent<'a>>,
-    #[serde(skip_serializing_if = "Option::is_none", rename = "generationConfig")]
-    generation_config: Option<GenerationConfig>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 struct GeminiSystemInstruction<'a> {
     parts: Vec<GeminiPart<'a>>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct GeminiResponse {
     candidates: Option<Vec<GeminiCandidate>>,
+    error: Option<GeminiErrorDetails>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
+struct GeminiErrorDetails {
+    code: Option<u32>,
+    message: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
 struct GeminiCandidate {
     content: Option<GeminiResponseContent>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct GeminiResponseContent {
     parts: Option<Vec<GeminiResponsePart>>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 struct GeminiResponsePart {
     text: Option<String>,
 }
@@ -119,15 +112,9 @@ impl GeminiBackend {
             })
             .collect();
 
-        // Disable extended thinking latency for snappy instant terminal streaming
-        let generation_config = Some(GenerationConfig {
-            thinking_config: Some(ThinkingConfig { thinking_budget: 0 }),
-        });
-
         GeminiRequestBody {
             system_instruction,
             contents,
-            generation_config,
         }
     }
 }
@@ -144,10 +131,9 @@ impl LlmBackend for GeminiBackend {
 
     async fn complete(&self, messages: &[Message]) -> Result<String> {
         let url = format!(
-            "{}/v1beta/models/{}:generateContent?key={}",
+            "{}/v1beta/models/{}:generateContent",
             self.cfg.base_url.trim_end_matches('/'),
-            self.cfg.model,
-            self.api_key
+            self.cfg.model
         );
 
         let body = self.build_request_body(messages);
@@ -155,6 +141,8 @@ impl LlmBackend for GeminiBackend {
         let resp = self
             .client
             .post(&url)
+            .header("x-goog-api-key", &self.api_key)
+            .header("Content-Type", "application/json")
             .json(&body)
             .send()
             .await
@@ -167,6 +155,10 @@ impl LlmBackend for GeminiBackend {
         }
 
         let data: GeminiResponse = resp.json().await.context("Failed to parse Gemini response")?;
+
+        if let Some(err) = data.error {
+            bail!("Gemini API returned error: {}", err.message.unwrap_or_default());
+        }
 
         let text = data
             .candidates
@@ -192,10 +184,9 @@ impl LlmBackend for GeminiBackend {
         on_chunk: &mut (dyn FnMut(StreamChunk) + Send),
     ) -> Result<String> {
         let url = format!(
-            "{}/v1beta/models/{}:streamGenerateContent?alt=sse&key={}",
+            "{}/v1beta/models/{}:streamGenerateContent?alt=sse",
             self.cfg.base_url.trim_end_matches('/'),
-            self.cfg.model,
-            self.api_key
+            self.cfg.model
         );
 
         let body = self.build_request_body(messages);
@@ -203,6 +194,8 @@ impl LlmBackend for GeminiBackend {
         let resp = self
             .client
             .post(&url)
+            .header("x-goog-api-key", &self.api_key)
+            .header("Content-Type", "application/json")
             .json(&body)
             .send()
             .await
@@ -233,16 +226,21 @@ impl LlmBackend for GeminiBackend {
 
                     if let Some(data) = line.strip_prefix("data: ") {
                         if let Ok(parsed) = serde_json::from_str::<GeminiResponse>(data) {
-                            if let Some(candidate) = parsed.candidates.and_then(|mut c| c.pop()) {
-                                if let Some(content) = candidate.content {
-                                    if let Some(parts) = content.parts {
-                                        for part in parts {
-                                            if let Some(token) = part.text {
-                                                full_text.push_str(&token);
-                                                on_chunk(StreamChunk {
-                                                    text: token,
-                                                    done: false,
-                                                });
+                            if let Some(err) = parsed.error {
+                                eprintln!("\nGemini Error: {}", err.message.unwrap_or_default());
+                            }
+                            if let Some(candidates) = parsed.candidates {
+                                for candidate in candidates {
+                                    if let Some(content) = candidate.content {
+                                        if let Some(parts) = content.parts {
+                                            for part in parts {
+                                                if let Some(token) = part.text {
+                                                    full_text.push_str(&token);
+                                                    on_chunk(StreamChunk {
+                                                        text: token,
+                                                        done: false,
+                                                    });
+                                                }
                                             }
                                         }
                                     }
@@ -254,6 +252,16 @@ impl LlmBackend for GeminiBackend {
                     break;
                 }
             }
+        }
+
+        if full_text.is_empty() {
+            // If stream produced no tokens, fallback to a non-streaming completion to show the answer or error
+            let direct = self.complete(messages).await?;
+            on_chunk(StreamChunk {
+                text: direct.clone(),
+                done: true,
+            });
+            return Ok(direct);
         }
 
         on_chunk(StreamChunk {
