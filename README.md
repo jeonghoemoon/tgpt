@@ -33,7 +33,7 @@ Most AI command-line tools rely on heavy runtime environments (like Node.js or P
 `tgpt` is crafted with **pure Rust**:
 - ⚡ **Zero runtime dependency**: Single compiled native binary (~3MB).
 - 🏎️ **Ultra-low latency**: Instant startup (<10ms) and real-time SSE token streaming.
-- 🔌 **Provider-agnostic**: Seamlessly switch between **OpenAI**, **Anthropic (Claude)**, and **local Ollama** without changing your workflow.
+- 🔌 **Provider-agnostic**: Seamlessly switch between **OpenAI**, **Anthropic (Claude)**, **Google Gemini**, and **local Ollama** without changing your workflow.
 - 🛡️ **Safe execution**: AI command generator always clarifies what the command does and asks for confirmation before executing.
 
 ---
@@ -46,7 +46,7 @@ Most AI command-line tools rely on heavy runtime environments (like Node.js or P
 | 🗣️ **Interactive Chat** | Multi-turn conversational REPL with session context and slash commands: `tgpt chat` |
 | ⚡ **Smart Command Runner** | Turn natural language into runnable shell commands: `tgpt run "find files > 500MB"` |
 | 🔍 **Source Code Review** | Pass any source code file for bug discovery, security audits, and optimizations: `tgpt review main.rs` |
-| 🌐 **Multi-Provider Support** | OpenAI (GPT-4o), Anthropic (Claude 3.5 Sonnet), and Local Ollama (Llama 3.2, Mistral, DeepSeek) |
+| 🌐 **Multi-Provider Support** | OpenAI (GPT-4o), Anthropic (Claude 3.5 Sonnet), Google Gemini (2.5 Flash), and Local Ollama (Llama 3.2, Mistral, DeepSeek) |
 | 🌊 **Token Streaming** | Smooth, real-time token rendering directly onto your terminal |
 | 🔒 **OS-Native Key Storage** | Secure local configuration using your platform's configuration standard |
 
@@ -80,8 +80,8 @@ Download pre-compiled standalone binaries for Linux, macOS, and Windows directly
 ## ⚡ Quick Start
 
 ```bash
-# 1. Set your OpenAI or Anthropic API key
-tgpt config set-key openai sk-...
+# 1. Set your preferred API key (Gemini, OpenAI, or Anthropic)
+tgpt config set-key gemini AIzaSy...
 
 # 2. Ask a quick question
 tgpt "Explain TCP handshakes in simple terms"
@@ -107,6 +107,7 @@ tgpt "Write an awk one-liner to calculate the sum of column 3 in a CSV"
 
 Override provider on the fly with `--provider` (`-p`):
 ```bash
+tgpt -p gemini "Explain quantum computing in one sentence"
 tgpt -p anthropic "Refactor this function to be functional and idempotent"
 ```
 
@@ -115,6 +116,7 @@ Launch an interactive session with memory:
 
 ```bash
 tgpt chat
+tgpt chat --provider gemini
 ```
 
 **Built-in Chat Commands:**
@@ -155,15 +157,17 @@ tgpt review package.json --focus "security audit on outdated dependencies"
 
 ```bash
 # Set API keys
+tgpt config set-key gemini <YOUR_KEY>
 tgpt config set-key openai <YOUR_KEY>
 tgpt config set-key anthropic <YOUR_KEY>
 
 # Set default model
+tgpt config set-model gemini gemini-2.5-flash
 tgpt config set-model openai gpt-4o-mini
 tgpt config set-model anthropic claude-3-5-sonnet-20241022
 
 # Change default provider
-tgpt config set-provider anthropic
+tgpt config set-provider gemini
 
 # Configure Local Ollama
 tgpt config set-provider ollama
@@ -183,6 +187,7 @@ tgpt config edit
 
 | Provider | Default Model | Configuration Required |
 |---|---|---|
+| **Google Gemini** | `gemini-2.5-flash` | `tgpt config set-key gemini <KEY>` or `export GEMINI_API_KEY="..."` |
 | **OpenAI** | `gpt-4o` | `tgpt config set-key openai <KEY>` or `export OPENAI_API_KEY="..."` |
 | **Anthropic** | `claude-3-5-sonnet-20241022` | `tgpt config set-key anthropic <KEY>` or `export ANTHROPIC_API_KEY="..."` |
 | **Ollama** (Local) | `llama3.2` | Runs locally with zero API key requirement (`http://localhost:11434`) |
@@ -196,7 +201,7 @@ tgpt config edit
 
 ## 🗺️ Roadmap
 
-- [x] Multi-provider support (OpenAI, Anthropic, Ollama)
+- [x] Multi-provider support (OpenAI, Anthropic, Gemini, Ollama)
 - [x] Streaming SSE output for instant feedback
 - [x] Interactive conversational chat mode
 - [x] Shell command generator with confirmation prompt

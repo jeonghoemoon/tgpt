@@ -44,6 +44,15 @@ impl ProviderConfig {
         }
     }
 
+    pub fn gemini_default() -> Self {
+        Self {
+            api_key: None,
+            model: "gemini-2.5-flash".to_string(),
+            base_url: "https://generativelanguage.googleapis.com".to_string(),
+            max_tokens: 8192,
+        }
+    }
+
     pub fn ollama_default() -> Self {
         Self {
             api_key: None,
@@ -71,6 +80,7 @@ impl Default for Config {
         let mut providers = HashMap::new();
         providers.insert("openai".to_string(), ProviderConfig::openai_default());
         providers.insert("anthropic".to_string(), ProviderConfig::anthropic_default());
+        providers.insert("gemini".to_string(), ProviderConfig::gemini_default());
         providers.insert("ollama".to_string(), ProviderConfig::ollama_default());
 
         Self {
@@ -108,8 +118,15 @@ impl Config {
         }
         let raw = fs::read_to_string(&path)
             .with_context(|| format!("Failed to read config at {}", path.display()))?;
-        let cfg: Config = serde_json::from_str(&raw)
+        let mut cfg: Config = serde_json::from_str(&raw)
             .with_context(|| format!("Invalid JSON in config file {}", path.display()))?;
+        
+        // Ensure new providers are populated if missing in existing configs
+        cfg.providers.entry("gemini".to_string()).or_insert_with(ProviderConfig::gemini_default);
+        cfg.providers.entry("openai".to_string()).or_insert_with(ProviderConfig::openai_default);
+        cfg.providers.entry("anthropic".to_string()).or_insert_with(ProviderConfig::anthropic_default);
+        cfg.providers.entry("ollama".to_string()).or_insert_with(ProviderConfig::ollama_default);
+
         Ok(cfg)
     }
 
@@ -132,7 +149,12 @@ impl Config {
     pub fn provider_mut(&mut self, name: &str) -> &mut ProviderConfig {
         self.providers
             .entry(name.to_string())
-            .or_insert_with(|| ProviderConfig::openai_default())
+            .or_insert_with(|| match name {
+                "gemini" => ProviderConfig::gemini_default(),
+                "anthropic" => ProviderConfig::anthropic_default(),
+                "ollama" => ProviderConfig::ollama_default(),
+                _ => ProviderConfig::openai_default(),
+            })
     }
 
     /// Resolve which provider to use: CLI override → config default
@@ -257,6 +279,7 @@ mod tests {
         assert!(cfg.stream);
         assert!(cfg.providers.contains_key("openai"));
         assert!(cfg.providers.contains_key("anthropic"));
+        assert!(cfg.providers.contains_key("gemini"));
         assert!(cfg.providers.contains_key("ollama"));
     }
 
@@ -266,6 +289,10 @@ mod tests {
         let openai = cfg.provider("openai").unwrap();
         assert_eq!(openai.model, "gpt-4o");
         assert_eq!(openai.base_url, "https://api.openai.com/v1");
+
+        let gemini = cfg.provider("gemini").unwrap();
+        assert_eq!(gemini.model, "gemini-2.5-flash");
+        assert_eq!(gemini.base_url, "https://generativelanguage.googleapis.com");
 
         let ollama = cfg.provider("ollama").unwrap();
         assert_eq!(ollama.model, "llama3.2");
@@ -277,6 +304,7 @@ mod tests {
     #[test]
     fn test_resolve_provider() {
         let cfg = Config::default();
+        assert_eq!(cfg.resolve_provider(Some("gemini")), "gemini");
         assert_eq!(cfg.resolve_provider(Some("anthropic")), "anthropic");
         assert_eq!(cfg.resolve_provider(None), "openai");
     }

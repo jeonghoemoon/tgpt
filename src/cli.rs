@@ -8,7 +8,7 @@ use clap::{Args, Parser, Subcommand};
     name = "tgpt",
     version,
     about = "🤖 AI-powered terminal assistant",
-    long_about = "Chat with AI, generate runnable shell commands, and review code — all from your terminal.\n\nSupports OpenAI, Anthropic (Claude), and local Ollama models.",
+    long_about = "Chat with AI, generate runnable shell commands, and review code — all from your terminal.\n\nSupports OpenAI, Anthropic (Claude), Google Gemini, and local Ollama models.",
     arg_required_else_help = false
 )]
 pub struct Cli {
@@ -28,7 +28,7 @@ pub struct Cli {
 pub enum Commands {
     /// Start an interactive multi-turn chat session
     Chat {
-        /// AI provider to use (openai | anthropic | ollama)
+        /// AI provider to use (openai | anthropic | gemini | ollama)
         #[arg(short, long)]
         provider: Option<String>,
     },
@@ -74,7 +74,7 @@ pub struct ConfigArgs {
 pub enum ConfigCommands {
     /// Set an API key for a provider
     SetKey {
-        /// Provider name (openai | anthropic | ollama)
+        /// Provider name (openai | anthropic | gemini | ollama)
         provider: String,
         /// API key value
         key: String,
@@ -84,13 +84,13 @@ pub enum ConfigCommands {
     SetModel {
         /// Provider name
         provider: String,
-        /// Model name (e.g. gpt-4o, claude-3-5-sonnet-20241022)
+        /// Model name (e.g. gpt-4o, claude-3-5-sonnet-20241022, gemini-2.5-flash)
         model: String,
     },
 
     /// Set the default provider
     SetProvider {
-        /// Provider name (openai | anthropic | ollama)
+        /// Provider name (openai | anthropic | gemini | ollama)
         provider: String,
     },
 

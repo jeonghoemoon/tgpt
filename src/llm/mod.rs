@@ -1,4 +1,5 @@
 pub mod anthropic;
+pub mod gemini;
 pub mod ollama;
 pub mod openai;
 
@@ -83,9 +84,10 @@ pub fn build_backend(cfg: &Config, provider: &str) -> Result<Box<dyn LlmBackend>
     match provider {
         "openai" => Ok(Box::new(openai::OpenAiBackend::new(pcfg.clone())?)),
         "anthropic" => Ok(Box::new(anthropic::AnthropicBackend::new(pcfg.clone())?)),
+        "gemini" => Ok(Box::new(gemini::GeminiBackend::new(pcfg.clone())?)),
         "ollama" => Ok(Box::new(ollama::OllamaBackend::new(pcfg.clone()))),
         other => anyhow::bail!(
-            "Unknown provider '{}'. Supported providers: openai, anthropic, ollama",
+            "Unknown provider '{}'. Supported providers: openai, anthropic, gemini, ollama",
             other
         ),
     }
